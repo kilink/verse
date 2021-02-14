@@ -8,20 +8,19 @@ import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.JavaFile
 import com.squareup.javapoet.TypeName
 import com.squareup.javapoet.TypeSpec
-
 import org.junit.jupiter.api.Test
 
 class UtilsTest {
     @Test
     fun testEqualsMethod() {
         val clazz = TypeSpec.classBuilder("Foo")
-                .addField(TypeName.LONG, "foo")
-                .addField(TypeName.BOOLEAN, "bar")
-                .addField(ClassName.get(String::class.java), "baz")
+            .addField(TypeName.LONG, "foo")
+            .addField(TypeName.BOOLEAN, "bar")
+            .addField(ClassName.get(String::class.java), "baz")
         val equalsMethod = Utils.equalsMethod(clazz)
 
         assertThat(equalsMethod.toString()).isEqualTo(
-                """ 
+            """ 
                 |@java.lang.Override
                 |public boolean equals(java.lang.Object obj) {
                 |  if (this == obj) return true;
@@ -33,7 +32,8 @@ class UtilsTest {
                 |  }
                 |  return false;
                 |}
-                |""".trimMargin())
+                |""".trimMargin()
+        )
 
         clazz.addMethod(equalsMethod)
 
@@ -45,18 +45,19 @@ class UtilsTest {
     @Test
     fun testHashCodeMethod() {
         val clazz = TypeSpec.classBuilder("Foo")
-                .addField(TypeName.LONG, "foo")
-                .addField(TypeName.BOOLEAN, "bar")
-                .addField(ClassName.get(String::class.java), "baz")
+            .addField(TypeName.LONG, "foo")
+            .addField(TypeName.BOOLEAN, "bar")
+            .addField(ClassName.get(String::class.java), "baz")
         val hashCodeMethod = Utils.hashCodeMethod(clazz)
 
         assertThat(hashCodeMethod.toString()).isEqualTo(
-                """
+            """
                 |@java.lang.Override
                 |public int hashCode() {
                 |  return java.util.Objects.hash(this.foo, this.bar, this.baz);
                 |}
-                |""".trimMargin())
+                |""".trimMargin()
+        )
 
         clazz.addMethod(hashCodeMethod)
 
@@ -68,16 +69,16 @@ class UtilsTest {
     @Test
     fun testToStringMethod() {
         val clazz = TypeSpec.classBuilder("Foo")
-                .addField(TypeName.LONG, "foo")
-                .addField(TypeName.BOOLEAN, "bar")
-                .addField(ArrayTypeName.of(TypeName.BYTE), "data")
-                .addField(ArrayTypeName.of(String::class.java), "names")
-                .addField(ClassName.get(String::class.java), "baz")
+            .addField(TypeName.LONG, "foo")
+            .addField(TypeName.BOOLEAN, "bar")
+            .addField(ArrayTypeName.of(TypeName.BYTE), "data")
+            .addField(ArrayTypeName.of(String::class.java), "names")
+            .addField(ClassName.get(String::class.java), "baz")
 
         val toString = Utils.toStringMethod(clazz)
 
         assertThat(toString.toString()).isEqualTo(
-                """
+            """
                 |@java.lang.Override
                 |public java.lang.String toString() {
                 |  java.lang.StringBuilder sb = new java.lang.StringBuilder("Foo{");
@@ -97,7 +98,8 @@ class UtilsTest {
                 |  sb.append(this.baz);
                 |  return sb.append('}').toString();
                 |}
-                |""".trimMargin())
+                |""".trimMargin()
+        )
 
         clazz.addMethod(toString)
 
