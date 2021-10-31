@@ -23,7 +23,7 @@ dependencies {
     testImplementation("com.google.testing.compile:compile-testing:0.+")
     testImplementation("com.google.truth:truth:1.+")
 
-    testImplementation(platform("org.junit:junit-bom:5.7.+"))
+    testImplementation(platform("org.junit:junit-bom:5.8.+"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
 
