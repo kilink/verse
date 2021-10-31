@@ -5,6 +5,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
     id("java")
     id("java-library")
+    id("jacoco")
 }
 
 java {
