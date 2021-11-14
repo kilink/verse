@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public final class Utils {
 
@@ -31,7 +30,9 @@ public final class Utils {
                 .addParameter(Object.class, "obj");
 
         method.addStatement("if (this == obj) return true");
-        method.beginControlFlow("if (obj instanceof $N)", type);
+        method.beginControlFlow("if (!(obj instanceof $N))", type);
+        method.addStatement("return false");
+        method.endControlFlow();
 
         method.addStatement("$N that = ($N) obj", type, type);
 
@@ -43,6 +44,10 @@ public final class Utils {
                 comparison = CodeBlock.builder()
                         .add("this.$N == that.$N", field, field)
                         .build();
+            } else if (field.type instanceof ArrayTypeName) {
+                comparison = CodeBlock.builder()
+                        .add("$T.equals(this.$N, that.$N)", Arrays.class, field, field)
+                        .build();
             } else {
                 comparison = CodeBlock.builder()
                         .add("$T.equals(this.$N, that.$N)", Objects.class, field, field)
@@ -52,8 +57,6 @@ public final class Utils {
         }
 
         method.addStatement("return $L", CodeBlock.join(comparisons, "\n&& "));
-        method.endControlFlow();
-        method.addStatement("return false");
 
         return method.build();
     }
@@ -70,11 +73,31 @@ public final class Utils {
                 .addModifiers(Modifier.PUBLIC)
                 .returns(int.class);
 
-        List<CodeBlock> fields = type.fieldSpecs.stream()
-                .map(field -> CodeBlock.of("this.$N", field))
-                .collect(Collectors.toList());
+        if (type.fieldSpecs.isEmpty()) {
+            method.addStatement("return 0");
+            return method.build();
+        }
 
-        method.addStatement("return $T.hash($L)", Objects.class, CodeBlock.join(fields, ", "));
+        if (type.fieldSpecs.size() == 1) {
+            FieldSpec fieldSpec = type.fieldSpecs.get(0);
+            if (fieldSpec.type instanceof ArrayTypeName) {
+                method.addStatement("return $T.hashCode(this.$N)", Arrays.class, fieldSpec);
+            } else {
+                method.addStatement("return $T.hashCode(this.$N)", Objects.class, fieldSpec);
+            }
+            return method.build();
+        }
+
+        CodeBlock codeBlock = type.fieldSpecs.stream()
+                .map(field -> {
+                    if (field.type instanceof ArrayTypeName) {
+                        return CodeBlock.of("$T.hashCode(this.$N)", Arrays.class, field);
+                    } else {
+                        return CodeBlock.of("this.$N", field);
+                    }
+                }).collect(CodeBlock.joining(", "));
+
+        method.addStatement("return $T.hash($L)", Objects.class, codeBlock);
 
         return method.build();
     }

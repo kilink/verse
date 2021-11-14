@@ -17,6 +17,7 @@ class UtilsTest {
             .addField(TypeName.LONG, "foo")
             .addField(TypeName.BOOLEAN, "bar")
             .addField(ClassName.get(String::class.java), "baz")
+            .addField(ArrayTypeName.of(TypeName.LONG), "quux")
         val equalsMethod = Utils.equalsMethod(clazz)
 
         assertThat(equalsMethod.toString()).isEqualTo(
@@ -24,13 +25,14 @@ class UtilsTest {
                 |@java.lang.Override
                 |public boolean equals(java.lang.Object obj) {
                 |  if (this == obj) return true;
-                |  if (obj instanceof Foo) {
-                |    Foo that = (Foo) obj;
-                |    return this.foo == that.foo
-                |        && this.bar == that.bar
-                |        && java.util.Objects.equals(this.baz, that.baz);
+                |  if (!(obj instanceof Foo)) {
+                |    return false;
                 |  }
-                |  return false;
+                |  Foo that = (Foo) obj;
+                |  return this.foo == that.foo
+                |      && this.bar == that.bar
+                |      && java.util.Objects.equals(this.baz, that.baz)
+                |      && java.util.Arrays.equals(this.quux, that.quux);
                 |}
                 |""".trimMargin()
         )
@@ -48,13 +50,58 @@ class UtilsTest {
             .addField(TypeName.LONG, "foo")
             .addField(TypeName.BOOLEAN, "bar")
             .addField(ClassName.get(String::class.java), "baz")
+            .addField(ArrayTypeName.of(String::class.java), "quux")
         val hashCodeMethod = Utils.hashCodeMethod(clazz)
 
         assertThat(hashCodeMethod.toString()).isEqualTo(
             """
                 |@java.lang.Override
                 |public int hashCode() {
-                |  return java.util.Objects.hash(this.foo, this.bar, this.baz);
+                |  return java.util.Objects.hash(this.foo, this.bar, this.baz, java.util.Arrays.hashCode(this.quux));
+                |}
+                |""".trimMargin()
+        )
+
+        clazz.addMethod(hashCodeMethod)
+
+        val javaFile = JavaFile.builder("", clazz.build()).build()
+        val result = javac().compile(javaFile.toJavaFileObject())
+        assertThat(result).succeededWithoutWarnings()
+    }
+
+    @Test
+    fun testHashCodeMethodSingleField() {
+        val clazz = TypeSpec.classBuilder("Foo")
+            .addField(TypeName.LONG, "foo")
+        val hashCodeMethod = Utils.hashCodeMethod(clazz)
+
+        assertThat(hashCodeMethod.toString()).isEqualTo(
+            """
+                |@java.lang.Override
+                |public int hashCode() {
+                |  return java.util.Objects.hashCode(this.foo);
+                |}
+                |""".trimMargin()
+        )
+
+        clazz.addMethod(hashCodeMethod)
+
+        val javaFile = JavaFile.builder("", clazz.build()).build()
+        val result = javac().compile(javaFile.toJavaFileObject())
+        assertThat(result).succeededWithoutWarnings()
+    }
+
+    @Test
+    fun testHashCodeMethodSingleArrayField() {
+        val clazz = TypeSpec.classBuilder("Foo")
+            .addField(ArrayTypeName.of(String::class.java), "foo")
+        val hashCodeMethod = Utils.hashCodeMethod(clazz)
+
+        assertThat(hashCodeMethod.toString()).isEqualTo(
+            """
+                |@java.lang.Override
+                |public int hashCode() {
+                |  return java.util.Arrays.hashCode(this.foo);
                 |}
                 |""".trimMargin()
         )
